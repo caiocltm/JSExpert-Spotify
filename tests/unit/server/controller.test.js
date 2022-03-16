@@ -2,6 +2,11 @@ import { jest, expect, describe, test, beforeEach } from "@jest/globals";
 import { Controller } from "../../../server/controller.js";
 import { Service } from "../../../server/service.js";
 import TestUtil from "../../_util/testUtil.js";
+import config from "../../../server/config.js";
+
+const {
+	pages: { homeHTML }
+} = config;
 
 describe("#Controller - Test suite for API response", () => {
 	let controller;
@@ -15,20 +20,19 @@ describe("#Controller - Test suite for API response", () => {
 
 	describe("getFileStream", () => {
 		test("should successfully response with file stream", async () => {
-			const filename = "index.html";
-
 			const mockFileStream = TestUtil.generateReadableStream(["data"]);
 
 			const expected = { stream: mockFileStream, type: ".html" };
 
-			jest.spyOn(
+			const getFileStreamMock = jest.spyOn(
 				Service.prototype,
 				Service.prototype.getFileStream.name
 			).mockResolvedValue(expected);
 
-			expect(await controller.getFileStream(filename)).toStrictEqual(
+			expect(await controller.getFileStream(homeHTML)).toStrictEqual(
 				expected
 			);
+			expect(getFileStreamMock).toHaveBeenCalledWith(homeHTML);
 		});
 	});
 });

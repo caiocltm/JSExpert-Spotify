@@ -3,7 +3,6 @@ import { Controller } from "./controller.js";
 import { logger } from "./util.js";
 
 const {
-	location,
 	pages: { homeHTML, controllerHTML },
 	constants: { CONTENT_TYPE },
 } = config;
