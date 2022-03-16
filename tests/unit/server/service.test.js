@@ -4,6 +4,11 @@ import TestUtil from "../../_util/testUtil.js";
 import fs from "fs";
 import path from "path";
 import fsPromises from "fs/promises";
+import config from "../../../server/config.js";
+
+const {
+	dir: { publicDirectory },
+} = config;
 
 describe("#Service - Test suite for API response", () => {
 	let service;
@@ -33,8 +38,7 @@ describe("#Service - Test suite for API response", () => {
 		test("should successfully response an object containing file name and type", async () => {
 			const filename = "/home/index.html";
 			const type = ".html";
-			const expectedFullPath =
-				"/home/caiomenezes/Pessoal/Repositórios/JSExpert-Spotify/public/home/index.html";
+			const expectedFullPath = path.join(publicDirectory, filename);
 
 			jest.spyOn(fsPromises, "access").mockResolvedValue();
 			jest.spyOn(path, "extname").mockReturnValue(type);
