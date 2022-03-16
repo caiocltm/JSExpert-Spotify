@@ -1,13 +1,13 @@
-import config from "./config.js";
-import { Controller } from "./controller.js";
-import { logger } from "./util.js";
+import config from "../config/config.js";
+import { RoutesController } from "../controllers/routes.controller.js";
+import { logger } from "../utils/log.util.js";
 
 const {
 	pages: { homeHTML, controllerHTML },
 	constants: { CONTENT_TYPE },
 } = config;
 
-const controller = new Controller();
+const routesController = new RoutesController(config);
 
 async function routes(request, response) {
 	const { method, url } = request;
@@ -21,19 +21,19 @@ async function routes(request, response) {
 	}
 
 	if (method === "GET" && url === "/home") {
-		const { stream } = await controller.getFileStream(homeHTML);
+		const { stream } = await routesController.getFileStream(homeHTML);
 
 		return stream.pipe(response);
 	}
 
 	if (method === "GET" && url === "/controller") {
-		const { stream } = await controller.getFileStream(controllerHTML);
+		const { stream } = await routesController.getFileStream(controllerHTML);
 
 		return stream.pipe(response);
 	}
 
 	if (method === "GET") {
-		const { stream, type } = await controller.getFileStream(url);
+		const { stream, type } = await routesController.getFileStream(url);
 
 		const contentType = CONTENT_TYPE[type];
 
@@ -67,7 +67,7 @@ function handlerError(error, response) {
 	return response.end();
 }
 
-export function handler(request, response) {
+export function staticRoutes(request, response) {
 	return routes(request, response).catch((error) =>
 		handlerError(error, response)
 	);

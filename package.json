@@ -5,7 +5,7 @@
 	"description": "Seja bem vindo(a) à sexta Semana Javascript Expert. Este é o código inicial para iniciar nossa jornada.",
 	"main": "index.js",
 	"scripts": {
-		"live-reload": "nodemon server/index.js",
+		"live-reload": "LOG_ENABLED=true nodemon server/index.js",
 		"start": "node server/index.js",
 		"test": "NODE_OPTIONS=--experimental-vm-modules jest --no-cache",
 		"test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --no-cache --watchAll",

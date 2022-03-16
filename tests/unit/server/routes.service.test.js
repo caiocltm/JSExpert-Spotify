@@ -1,23 +1,23 @@
 import { jest, expect, describe, test, beforeEach } from "@jest/globals";
-import { Service } from "../../../server/service.js";
-import TestUtil from "../../_util/testUtil.js";
+import { RoutesService } from "../../../server/services/routes.service.js";
+import TestUtil from "../../_util/test.util.js";
 import fs from "fs";
 import path from "path";
 import fsPromises from "fs/promises";
-import config from "../../../server/config.js";
+import config from "../../../server/config/config.js";
 
 const {
 	dir: { publicDirectory },
 } = config;
 
-describe("#Service - Test suite for API response", () => {
-	let service;
+describe("#Routes Service - Test suite for API response", () => {
+	let routesService;
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 		jest.restoreAllMocks();
 
-		service = new Service();
+		routesService = new RoutesService(config);
 	});
 
 	describe("createFileStream", () => {
@@ -28,9 +28,9 @@ describe("#Service - Test suite for API response", () => {
 
 			jest.spyOn(fs, "createReadStream").mockReturnValue(mockFileStream);
 
-			expect(await service.createFileStream(filename)).toStrictEqual(
-				mockFileStream
-			);
+			expect(
+				await routesService.createFileStream(filename)
+			).toStrictEqual(mockFileStream);
 		});
 	});
 
@@ -48,7 +48,9 @@ describe("#Service - Test suite for API response", () => {
 				type: type,
 			};
 
-			expect(await service.getFileInfo(filename)).toStrictEqual(expected);
+			expect(await routesService.getFileInfo(filename)).toStrictEqual(
+				expected
+			);
 		});
 	});
 
@@ -65,15 +67,15 @@ describe("#Service - Test suite for API response", () => {
 			};
 
 			jest.spyOn(
-				Service.prototype,
-				Service.prototype.getFileInfo.name
+				RoutesService.prototype,
+				RoutesService.prototype.getFileInfo.name
 			).mockReturnValue(expectedFileInfo);
 			jest.spyOn(
-				Service.prototype,
-				Service.prototype.createFileStream.name
+				RoutesService.prototype,
+				RoutesService.prototype.createFileStream.name
 			).mockReturnValue(mockFileStream);
 
-			expect(await service.getFileStream(filename)).toStrictEqual(
+			expect(await routesService.getFileStream(filename)).toStrictEqual(
 				expected
 			);
 		});

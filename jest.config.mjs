@@ -10,7 +10,7 @@ const defaultConfig = {
 			statements: 100,
 		},
 	},
-	coveragePathIgnorePatterns: ["tests/_util/testUtil.js"],
+	coveragePathIgnorePatterns: ["tests/_util/test.util.js"],
 	maxWorkers: "50%",
 	watchPathIgnorePatterns: ["node_modules"],
 	transformIgnorePatterns: ["node_modules"],

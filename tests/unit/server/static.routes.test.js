@@ -1,8 +1,8 @@
 import { jest, expect, describe, test, beforeEach } from "@jest/globals";
-import config from "../../../server/config.js";
-import { Controller } from "../../../server/controller.js";
-import { handler } from "../../../server/routes.js";
-import TestUtil from "../../_util/testUtil.js";
+import config from "../../../server/config/config.js";
+import { RoutesController } from "../../../server/controllers/routes.controller.js";
+import { staticRoutes } from "../../../server/routes/static.routes.js";
+import TestUtil from "../../_util/test.util.js";
 
 const {
 	pages: { homeHTML, controllerHTML },
@@ -10,20 +10,20 @@ const {
 	constants: { CONTENT_TYPE },
 } = config;
 
-describe("#Routes - Test suite for API response", () => {
+describe("#Static Routes - Test suite for API response", () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		jest.restoreAllMocks();
 	});
 
-	describe("Routes", () => {
+	describe("Static Routes", () => {
 		test("GET / - should redirect to home page", async () => {
 			const params = TestUtil.defaultHandlerParams();
 
 			params.request.method = "GET";
 			params.request.url = "/";
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
 			expect(params.response.end).toHaveBeenCalled();
 			expect(params.response.writeHead).toBeCalledWith(302, {
@@ -40,14 +40,14 @@ describe("#Routes - Test suite for API response", () => {
 			const mockFileStream = TestUtil.generateReadableStream(["data"]);
 
 			jest.spyOn(
-				Controller.prototype,
-				Controller.prototype.getFileStream.name
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
 			).mockResolvedValue({ stream: mockFileStream, type: ".txt" });
 			jest.spyOn(mockFileStream, "pipe").mockReturnValue();
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
-			expect(Controller.prototype.getFileStream).toBeCalledWith(homeHTML);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(homeHTML);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 		});
 
@@ -60,14 +60,14 @@ describe("#Routes - Test suite for API response", () => {
 			const mockFileStream = TestUtil.generateReadableStream(["data"]);
 
 			jest.spyOn(
-				Controller.prototype,
-				Controller.prototype.getFileStream.name
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
 			).mockResolvedValue({ stream: mockFileStream, type: ".txt" });
 			jest.spyOn(mockFileStream, "pipe").mockReturnValue();
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
-			expect(Controller.prototype.getFileStream).toBeCalledWith(
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(
 				controllerHTML
 			);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
@@ -85,14 +85,14 @@ describe("#Routes - Test suite for API response", () => {
 			const expectedType = ".html";
 
 			jest.spyOn(
-				Controller.prototype,
-				Controller.prototype.getFileStream.name
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
 			).mockResolvedValue({ stream: mockFileStream, type: expectedType });
 			jest.spyOn(mockFileStream, "pipe").mockReturnValue();
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
-			expect(Controller.prototype.getFileStream).toBeCalledWith(filename);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(filename);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 			expect(params.response.writeHead).toBeCalledWith(200, {
 				"Content-Type": CONTENT_TYPE[expectedType],
@@ -111,14 +111,14 @@ describe("#Routes - Test suite for API response", () => {
 			const expectedType = "";
 
 			jest.spyOn(
-				Controller.prototype,
-				Controller.prototype.getFileStream.name
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
 			).mockResolvedValue({ stream: mockFileStream, type: expectedType });
 			jest.spyOn(mockFileStream, "pipe").mockReturnValue();
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
-			expect(Controller.prototype.getFileStream).toBeCalledWith(filename);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(filename);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 		});
 
@@ -128,7 +128,7 @@ describe("#Routes - Test suite for API response", () => {
 			params.request.method = "POST";
 			params.request.url = "/unknown";
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
 			expect(params.response.writeHead).toHaveBeenCalledWith(404);
 			expect(params.response.end).toHaveBeenCalled();
@@ -143,38 +143,33 @@ describe("#Routes - Test suite for API response", () => {
 			params.request.url = "/index.png";
 
 			jest.spyOn(
-				Controller.prototype,
-				Controller.prototype.getFileStream.name
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
 			).mockRejectedValue(
 				new Error("Error: ENOENT: no such file or directory")
 			);
 
-			await handler(...params.values());
+			await staticRoutes(...params.values());
 
 			expect(params.response.writeHead).toHaveBeenCalledWith(404);
 			expect(params.response.end).toHaveBeenCalled();
 		});
 
-		test(
-			"should response with 500 (Internal server error) given an unknown error",
-			async () => {
-				const params = TestUtil.defaultHandlerParams();
+		test("should response with 500 (Internal server error) given an unknown error", async () => {
+			const params = TestUtil.defaultHandlerParams();
 
-				params.request.method = "GET";
-				params.request.url = "/index.png";
+			params.request.method = "GET";
+			params.request.url = "/index.png";
 
-				jest.spyOn(
-					Controller.prototype,
-					Controller.prototype.getFileStream.name
-				).mockRejectedValue(
-					new Error("Error: unknown")
-				);
+			jest.spyOn(
+				RoutesController.prototype,
+				RoutesController.prototype.getFileStream.name
+			).mockRejectedValue(new Error("Error: unknown"));
 
-				await handler(...params.values());
+			await staticRoutes(...params.values());
 
-				expect(params.response.writeHead).toHaveBeenCalledWith(500);
-				expect(params.response.end).toHaveBeenCalled();
-			}
-		);
+			expect(params.response.writeHead).toHaveBeenCalledWith(500);
+			expect(params.response.end).toHaveBeenCalled();
+		});
 	});
 });
