@@ -47,7 +47,9 @@ describe("#Static Routes - Test suite for API response", () => {
 
 			await staticRoutes(...params.values());
 
-			expect(RoutesController.prototype.getFileStream).toBeCalledWith(homeHTML);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(
+				homeHTML
+			);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 		});
 
@@ -92,7 +94,9 @@ describe("#Static Routes - Test suite for API response", () => {
 
 			await staticRoutes(...params.values());
 
-			expect(RoutesController.prototype.getFileStream).toBeCalledWith(filename);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(
+				filename
+			);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 			expect(params.response.writeHead).toBeCalledWith(200, {
 				"Content-Type": CONTENT_TYPE[expectedType],
@@ -118,7 +122,9 @@ describe("#Static Routes - Test suite for API response", () => {
 
 			await staticRoutes(...params.values());
 
-			expect(RoutesController.prototype.getFileStream).toBeCalledWith(filename);
+			expect(RoutesController.prototype.getFileStream).toBeCalledWith(
+				filename
+			);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
 		});
 

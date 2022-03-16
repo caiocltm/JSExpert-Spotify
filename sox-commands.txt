@@ -1,0 +1,36 @@
+# View .mp3 file metadata info.
+sox \
+ --i \
+ "output.mp3"
+
+# Convert Sample rate of a .mp3 file to 48000
+sox \
+ -v 0.99 \
+ -t mp3 \
+ "audio/fx/Applause Sound Effect HD No Copyright (128 kbps).mp3" \
+ -r 48000 \
+ -t mp3 \
+ "output.mp3"
+
+# Get Bit rate of a .mp3 file
+sox \
+ --i \
+ -B \
+ "audio/fx/Fart - Gaming Sound Effect (HD) (128 kbps).mp3"
+
+# Get Sample rate of a .mp3 file
+sox \
+ --i \
+ -r \
+ "audio/fx/Fart - Gaming Sound Effect (HD) (128 kbps).mp3"
+
+# Concat two different audios content
+sox \
+ -t mp3 \
+ -v 0.99 \
+ -m "audio/songs/conversation.mp3" \
+ -t mp3 \
+ -v 0.99 \
+ "audio/fx/Fart - Gaming Sound Effect (HD) (128 kbps).mp3" \
+ -t mp3 \
+ "output.mp3"
