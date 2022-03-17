@@ -21,24 +21,58 @@ export default {
 		{
 			...defaultConfig,
 			testEnvironment: "node",
-			displayName: "backend",
+			displayName: {
+				name: 'Unit Tests Server',
+				color: 'blue'
+			},
 			collectCoverageFrom: ["server/", "!server/index.js"],
 			transformIgnorePatterns: [
 				...defaultConfig.transformIgnorePatterns,
 				"public",
 			],
-			testMatch: ["**/tests/**/server/**/*.test.js"],
+			testMatch: ["**/tests/unit/server/**/*.test.js"],
+		},
+		{
+			...defaultConfig,
+			testEnvironment: "node",
+			displayName: {
+				name: 'e2e Tests Server',
+				color: 'white'
+			},
+			collectCoverageFrom: ["server/", "!server/index.js"],
+			transformIgnorePatterns: [
+				...defaultConfig.transformIgnorePatterns,
+				"public",
+			],
+			testMatch: ["**/tests/e2e/server/**/*.test.js"],
 		},
 		{
 			...defaultConfig,
 			testEnvironment: "jsdom",
-			displayName: "frontend",
+			displayName: {
+				name: 'Unit Tests App',
+				color: 'green'
+			},
 			collectCoverageFrom: ["public/"],
 			transformIgnorePatterns: [
 				...defaultConfig.transformIgnorePatterns,
 				"server",
 			],
-			testMatch: ["**/tests/**/public/**/*.test.js"],
+			testMatch: ["**/tests/unit/public/**/*.test.js"],
+		},
+		{
+			...defaultConfig,
+			testEnvironment: "jsdom",
+			displayName: {
+				name: 'e2e Tests App',
+				color: 'red'
+			},
+			collectCoverageFrom: ["public/"],
+			transformIgnorePatterns: [
+				...defaultConfig.transformIgnorePatterns,
+				"server",
+			],
+			testMatch: ["**/tests/e2e/public/**/*.test.js"],
 		},
 	],
 };

@@ -3,6 +3,7 @@ import config from "../../../server/config/config.js";
 import { RoutesController } from "../../../server/controllers/routes.controller.js";
 import { staticRoutes } from "../../../server/routes/static.routes.js";
 import TestUtil from "../../_util/test.util.js";
+import Events from "events";
 
 const {
 	pages: { homeHTML, controllerHTML },
@@ -126,6 +127,60 @@ describe("#Static Routes - Test suite for API response", () => {
 				filename
 			);
 			expect(mockFileStream.pipe).toHaveBeenCalledWith(params.response);
+		});
+
+		test(`GET /stream - should response with audio stream`, async () => {
+			const params = TestUtil.defaultHandlerParams();
+
+			params.request.method = "GET";
+			params.request.url = "/stream?id=999999";
+
+			const clienteStreamMock = TestUtil.generatePassthroughStream();
+
+			const onClose = jest.fn();
+
+			jest.spyOn(
+				RoutesController.prototype,
+				RoutesController.prototype.createClientStream.name
+			).mockReturnValue({ stream: clienteStreamMock, onClose });
+
+			jest.spyOn(clienteStreamMock, "pipe").mockReturnValue();
+
+			await staticRoutes(...params.values());
+
+			expect(
+				RoutesController.prototype.createClientStream
+			).toHaveBeenCalled();
+			expect(clienteStreamMock.pipe).toHaveBeenCalledWith(
+				params.response
+			);
+			expect(params.response.writeHead).toHaveBeenCalledWith(200, {
+				"Content-Type": "audio/mpeg",
+				"Accept-Ranges": "bytes",
+			});
+		});
+
+		test(`POST /controller - should response result object`, async () => {
+			const command = '{ "command": "start" }';
+			const params = TestUtil.defaultHandlerParams(command);
+			const result = { result: "ok" };
+
+			params.request.method = "POST";
+			params.request.url = "/controller";
+
+			jest.spyOn(Events, "once").mockResolvedValue(command);
+
+			jest.spyOn(
+				RoutesController.prototype,
+				RoutesController.prototype.handleCommand.name
+			).mockResolvedValue(result);
+
+			await staticRoutes(...params.values());
+
+			expect(RoutesController.prototype.handleCommand).toHaveBeenCalled();
+			expect(params.response.end).toHaveBeenCalledWith(
+				JSON.stringify(result)
+			);
 		});
 
 		test(`GET /unknown - should response with 404 (Not found) given an inexistent route`, async () => {

@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import { Readable, Writable } from "stream";
+import { PassThrough, Readable, Writable } from "stream";
 
 export default class TestUtil {
 	static generateReadableStream(data) {
@@ -14,6 +14,10 @@ export default class TestUtil {
 		});
 	}
 
+	static generatePassthroughStream() {
+		return new PassThrough();
+	}
+
 	static generateWritableStream(onData) {
 		return new Writable({
 			write(chunk, encoding, callback) {
@@ -23,8 +27,8 @@ export default class TestUtil {
 		});
 	}
 
-	static defaultHandlerParams() {
-		const requestStream = TestUtil.generateReadableStream(["data"]);
+	static defaultHandlerParams(requestData = 'data') {
+		const requestStream = TestUtil.generateReadableStream([requestData]);
 		const responseStream = TestUtil.generateWritableStream(() => ({}));
 		const data = {
 			request: Object.assign(requestStream, {

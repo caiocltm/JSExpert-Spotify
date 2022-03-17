@@ -12,14 +12,14 @@ const possibleCommands = { start: "start", stop: "stop" };
 const getAvailablePort = PortFinder.getPortPromise;
 
 function pipeAndReadStreamData(stream, onChunk) {
-	new Transform({
+	const transform = new Transform({
 		transform(chunk, encoding, callback) {
 			onChunk(chunk);
 			callback(null, chunk);
 		},
 	});
-	
-	return stream.pipe();
+
+	return stream.pipe(transform);
 }
 
 async function getTestServer() {

@@ -3,6 +3,7 @@ import { RoutesController } from "../../../server/controllers/routes.controller.
 import { RoutesService } from "../../../server/services/routes.service.js";
 import TestUtil from "../../_util/test.util.js";
 import config from "../../../server/config/config.js";
+import { randomUUID } from "crypto";
 
 const {
 	pages: { homeHTML },
@@ -35,6 +36,76 @@ describe("#Routes Controller - Test suite for API response", () => {
 				await routesController.getFileStream(homeHTML)
 			).toStrictEqual(expected);
 			expect(getFileStreamMock).toHaveBeenCalledWith(homeHTML);
+		});
+	});
+
+	describe("handleCommand", () => {
+		test("should successfully start stream", async () => {
+			const command = "start";
+			const expected = {
+				result: "ok",
+			};
+
+			const startStreamingMock = jest
+				.spyOn(
+					RoutesService.prototype,
+					RoutesService.prototype.startStreaming.name
+				)
+				.mockReturnValue();
+
+			expect(
+				await routesController.handleCommand({ command })
+			).toStrictEqual(expected);
+			expect(startStreamingMock).toHaveBeenCalled();
+		});
+
+		test("should successfully stop stream", async () => {
+			const command = "stop";
+			const expected = {
+				result: "ok",
+			};
+
+			const stopStreamingMock = jest
+				.spyOn(
+					RoutesService.prototype,
+					RoutesService.prototype.stopStreaming.name
+				)
+				.mockReturnValue();
+
+			expect(
+				await routesController.handleCommand({ command })
+			).toStrictEqual(expected);
+			expect(stopStreamingMock).toHaveBeenCalled();
+		});
+
+		test("should not execute command given unknown operation", async () => {
+			const command = "pause";
+
+			expect(
+				await routesController.handleCommand({ command })
+			).toBeUndefined();
+		});
+	});
+
+	describe("createClientStream", () => {
+		test("should successfully create client stream", async () => {
+			const clientStream = TestUtil.generatePassthroughStream();
+			const expectedClientStream = { id: randomUUID(), clientStream };
+
+			const createClientStream = jest
+				.spyOn(
+					RoutesService.prototype,
+					RoutesService.prototype.createClientStream.name
+				)
+				.mockReturnValue(expectedClientStream);
+
+			expect(routesController.createClientStream()).toHaveProperty(
+				'onClose'
+			);
+			expect(routesController.createClientStream()).toHaveProperty(
+				'stream'
+			);
+			expect(createClientStream).toHaveBeenCalled();
 		});
 	});
 });

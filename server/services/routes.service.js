@@ -1,14 +1,12 @@
 import fs from "fs";
 import { extname, join } from "path";
 import fsPromises from "fs/promises";
-import { randomUUID } from "crypto";
+import crypto from "crypto";
 import { PassThrough, Writable } from "stream";
-import { exec, spawn } from "child_process";
+import ChildProcess from "child_process";
 import { logger } from "../utils/log.util.js";
 import Throttle from "throttle";
 import StreamPromises from "stream/promises";
-import { once } from "events";
-import { promisify } from "util";
 
 export class RoutesService {
 	constructor(config) {
@@ -21,7 +19,7 @@ export class RoutesService {
 	}
 
 	createClientStream() {
-		const id = randomUUID();
+		const id = crypto.randomUUID();
 		const clientStream = new PassThrough();
 
 		this.clientStreams.set(id, clientStream);
@@ -38,12 +36,10 @@ export class RoutesService {
 
 	async _executeSoxCommand(args) {
 		return new Promise((resolve, reject) => {
-			exec("sox ".concat(args.join(" ")), (error, out, stderror) => {
-				if (error) reject(error);
-				if (stderror) reject(stderror);
+			const soxCommand = ChildProcess.spawn("sox", args);
 
-				resolve(out.toString());
-			});
+			soxCommand.stdout.on("data", (data) => resolve(data));
+			soxCommand.stderr.on("data", (error) => reject(error.toString()));
 		});
 	}
 
@@ -101,7 +97,7 @@ export class RoutesService {
 		);
 	}
 
-	async stopStreaming() {
+	stopStreaming() {
 		this.throttleTransform?.end?.();
 	}
 
