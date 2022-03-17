@@ -5,6 +5,8 @@ import config from "../../../server/config/config.js";
 import Server from "../../../server/server.js";
 import { Transform } from "stream";
 import { setTimeout } from "timers/promises";
+import { readFileSync } from "fs";
+import { join } from "path";
 
 const RETENTION_DATA_PERIOD = 200;
 const commandResponse = JSON.stringify({ result: "ok" });
@@ -61,7 +63,106 @@ describe("#API e2e - Test suite", () => {
 		jest.restoreAllMocks();
 	});
 
-	describe("Client workflow", () => {
+	describe("GET /", () => {
+		test("should be redirected to page home", async () => {
+			const server = await getTestServer();
+			const response = await server.testServer.get("/");
+
+			expect(response.status).toStrictEqual(302);
+			expect(response.header.location).toStrictEqual(
+				config.location.home
+			);
+
+			server.kill();
+		});
+	});
+
+	describe("GET /home", () => {
+		test(`should sucessfully receive ${config.pages.homeHTML} page`, async () => {
+			const server = await getTestServer();
+			const response = await server.testServer.get(config.location.home);
+			const page = readFileSync(
+				join(config.dir.publicDirectory, config.pages.homeHTML)
+			).toString();
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(page);
+
+			server.kill();
+		});
+	});
+
+	describe("GET /controller", () => {
+		test(`should sucessfully receive ${config.pages.controllerHTML} page`, async () => {
+			const server = await getTestServer();
+			const response = await server.testServer.get(
+				config.location.controller
+			);
+			const page = readFileSync(
+				join(config.dir.publicDirectory, config.pages.controllerHTML)
+			).toString();
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(page);
+
+			server.kill();
+		});
+	});
+
+	describe("GET static resources", () => {
+		test("should sucessfully receive .html static resource", async () => {
+			const htmlResource = `${config.location.controller}/index.html`;
+			const server = await getTestServer();
+			const response = await server.testServer.get(htmlResource);
+			const staticResource = readFileSync(
+				join(config.dir.publicDirectory, htmlResource)
+			).toString();
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(staticResource);
+			expect(response.header["content-type"]).toStrictEqual(
+				config.constants.CONTENT_TYPE[".html"]
+			);
+
+			server.kill();
+		});
+
+		test("should sucessfully receive .css static resource", async () => {
+			const cssResource = `${config.location.controller}/css/index.css`;
+			const server = await getTestServer();
+			const response = await server.testServer.get(cssResource);
+			const staticResource = readFileSync(
+				join(config.dir.publicDirectory, cssResource)
+			).toString();
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(staticResource);
+			expect(response.header["content-type"]).toStrictEqual(
+				config.constants.CONTENT_TYPE[".css"]
+			);
+
+			server.kill();
+		});
+
+		test("should sucessfully receive .png static resource", async () => {
+			const pngResource = `${config.location.controller}/assets/JS.png`;
+			const server = await getTestServer();
+			const response = await server.testServer.get(pngResource);
+			const staticResource = readFileSync(
+				join(config.dir.publicDirectory, pngResource)
+			).toString();
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(staticResource);
+			expect(response.header["content-type"]).toStrictEqual(
+				config.constants.CONTENT_TYPE[".png"]
+			);
+
+			server.kill();
+		});
+	});
+
+	describe("GET /stream", () => {
 		test("should not receive data stream if the process is not playing", async () => {
 			const server = await getTestServer();
 
@@ -71,9 +172,9 @@ describe("#API e2e - Test suite", () => {
 
 			await setTimeout(RETENTION_DATA_PERIOD);
 
-			server.kill();
-
 			expect(onChunk).not.toHaveBeenCalled();
+
+			server.kill();
 		});
 
 		test("should receive data stream if the process is playing", async () => {
@@ -95,6 +196,36 @@ describe("#API e2e - Test suite", () => {
 
 			expect(buffer).toBeInstanceOf(Buffer);
 			expect(buffer.length).toBeGreaterThan(1000);
+
+			server.kill();
+		});
+	});
+
+	describe("POST /controller", () => {
+		test("should sucessfully POST stream start command", async () => {
+			const command = possibleCommands.start;
+			const server = await getTestServer();
+			const response = await server.testServer
+				.post("/controller")
+				.send({ command });
+			const expected = JSON.stringify({ result: "ok" });
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(expected);
+
+			server.kill();
+		});
+
+		test("should sucessfully POST stream stop command", async () => {
+			const command = possibleCommands.stop;
+			const server = await getTestServer();
+			const response = await server.testServer
+				.post("/controller")
+				.send({ command });
+			const expected = JSON.stringify({ result: "ok" });
+
+			expect(response.status).toStrictEqual(200);
+			expect(response.text).toStrictEqual(expected);
 
 			server.kill();
 		});
