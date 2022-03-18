@@ -1,5 +1,5 @@
-import { RoutesService } from "../services/routes.service.js";
-import { logger } from "../utils/log.util.js";
+import { RoutesService } from '../services/routes.service.js';
+import { logger } from '../utils/log.util.js';
 
 export class RoutesController {
 	constructor(config) {
@@ -15,17 +15,17 @@ export class RoutesController {
 		logger.info(`Command received: [${command}]`);
 
 		const result = {
-			result: "ok",
+			result: 'ok'
 		};
 
 		const cmd = command.toLowerCase();
 
-		if (cmd.includes("start")) {
+		if (cmd.includes('start')) {
 			this.routesService.startStreaming();
 			return result;
 		}
 
-		if (cmd.includes("stop")) {
+		if (cmd.includes('stop')) {
 			this.routesService.stopStreaming();
 			return result;
 		}
@@ -41,7 +41,7 @@ export class RoutesController {
 
 		return {
 			stream: clientStream,
-			onClose,
+			onClose
 		};
 	}
 }

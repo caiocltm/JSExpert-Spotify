@@ -1,5 +1,5 @@
-import { jest } from "@jest/globals";
-import { PassThrough, Readable, Writable } from "stream";
+import { jest } from '@jest/globals';
+import { PassThrough, Readable, Writable } from 'stream';
 
 export default class TestUtil {
 	static generateReadableStream(data) {
@@ -10,7 +10,7 @@ export default class TestUtil {
 				}
 
 				this.push(null);
-			},
+			}
 		});
 	}
 
@@ -23,28 +23,28 @@ export default class TestUtil {
 			write(chunk, encoding, callback) {
 				onData?.(chunk);
 				callback(null, chunk);
-			},
+			}
 		});
 	}
 
-	static defaultHandlerParams(requestData = "data") {
+	static defaultHandlerParams(requestData = 'data') {
 		const requestStream = TestUtil.generateReadableStream([requestData]);
 		const responseStream = TestUtil.generateWritableStream();
 		const data = {
 			request: Object.assign(requestStream, {
 				headers: {},
-				method: "",
-				url: "",
+				method: '',
+				url: ''
 			}),
 			response: Object.assign(responseStream, {
 				writeHead: jest.fn(),
-				end: jest.fn(),
-			}),
+				end: jest.fn()
+			})
 		};
 
 		return {
 			values: () => Object.values(data),
-			...data,
+			...data
 		};
 	}
 }

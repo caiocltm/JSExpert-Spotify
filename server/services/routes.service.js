@@ -1,12 +1,12 @@
-import fs from "fs";
-import { extname, join } from "path";
-import fsPromises from "fs/promises";
-import crypto from "crypto";
-import { PassThrough, Writable } from "stream";
-import ChildProcess from "child_process";
-import { logger } from "../utils/log.util.js";
-import Throttle from "throttle";
-import StreamPromises from "stream/promises";
+import fs from 'fs';
+import { extname, join } from 'path';
+import fsPromises from 'fs/promises';
+import crypto from 'crypto';
+import { PassThrough, Writable } from 'stream';
+import ChildProcess from 'child_process';
+import { logger } from '../utils/log.util.js';
+import Throttle from 'throttle';
+import StreamPromises from 'stream/promises';
 
 export class RoutesService {
 	constructor(config) {
@@ -26,7 +26,7 @@ export class RoutesService {
 
 		return {
 			id,
-			clientStream,
+			clientStream
 		};
 	}
 
@@ -36,24 +36,22 @@ export class RoutesService {
 
 	async _executeSoxCommand(args) {
 		return new Promise((resolve, reject) => {
-			const soxCommand = ChildProcess.spawn("sox", args);
+			const soxCommand = ChildProcess.spawn('sox', args);
 
-			soxCommand.stdout.on("data", (data) => resolve(data));
-			soxCommand.stderr.on("data", (error) => reject(error.toString()));
+			soxCommand.stdout.on('data', (data) => resolve(data));
+			soxCommand.stderr.on('data', (error) => reject(error.toString()));
 		});
 	}
 
 	async getBitRate(song) {
 		try {
-			const args = ["--i", "-B", song];
+			const args = ['--i', '-B', song];
 
 			const result = await this._executeSoxCommand(args);
 
-			return result.toString().trim().replace(/k/, "000");
+			return result.toString().trim().replace(/k/, '000');
 		} catch (error) {
-			logger.error(
-				`Could not get Bitrate song [${song}] file given error: [${error}]`
-			);
+			logger.error(`Could not get Bitrate song [${song}] file given error: [${error}]`);
 			return this.config.constants.fallbackBitRate;
 		}
 	}
@@ -64,6 +62,7 @@ export class RoutesService {
 				for (const [id, stream] of this.clientStreams) {
 					if (stream.writableEnded) {
 						this.clientStreams.delete(id);
+						// eslint-disable-next-line no-continue
 						continue;
 					}
 
@@ -71,30 +70,20 @@ export class RoutesService {
 				}
 
 				callback();
-			},
+			}
 		});
 	}
 
 	async startStreaming() {
 		logger.info(`Starting with ${this.currentSong}`);
 
-		const bitRate = (this.currentBitRate =
-			(await this.getBitRate(this.currentSong)) /
-			this.config.constants.bitRateDivisor);
+		this.currentBitRate = (await this.getBitRate(this.currentSong)) / this.config.constants.bitRateDivisor;
 
-		const throttleTransform = (this.throttleTransform = new Throttle(
-			bitRate
-		));
+		this.throttleTransform = new Throttle(this.currentBitRate);
 
-		const songReadable = (this.songReadable = this.createFileStream(
-			this.currentSong
-		));
+		this.songReadable = this.createFileStream(this.currentSong);
 
-		return StreamPromises.pipeline(
-			songReadable,
-			throttleTransform,
-			this.broadCast()
-		);
+		return StreamPromises.pipeline(this.songReadable, this.throttleTransform, this.broadCast());
 	}
 
 	stopStreaming() {
@@ -114,7 +103,7 @@ export class RoutesService {
 
 		return {
 			type: fileType,
-			name: fullFilePath,
+			name: fullFilePath
 		};
 	}
 
@@ -123,7 +112,7 @@ export class RoutesService {
 
 		return {
 			stream: this.createFileStream(name),
-			type,
+			type
 		};
 	}
 }
