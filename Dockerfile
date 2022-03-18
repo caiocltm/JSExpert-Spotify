@@ -6,7 +6,7 @@ RUN apt-get update \
 
 WORKDIR /spotify-radio/
 
-COPY package.json package-lock.json /spotify-radio/
+COPY package*.json /spotify-radio/
 
 RUN npm ci --silent
 
