@@ -34,7 +34,6 @@ export class RoutesController {
 	createClientStream() {
 		const { id, clientStream } = this.routesService.createClientStream();
 
-		/* istanbul ignore next */
 		const onClose = () => {
 			logger.info(`Closing connection of client [${id}]`);
 			this.routesService.removeClientStream(id);

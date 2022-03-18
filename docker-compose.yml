@@ -1,4 +1,4 @@
-version: "3.7"
+version: "2.1"
 
 services:
     live-reload:
@@ -6,7 +6,6 @@ services:
         build: .
         environment:
             PORT: 3000
-            LOG_ENABLED: true
         command:
             - npm
             - run
@@ -20,8 +19,6 @@ services:
     test:
         image: spotify-radio
         build: .
-        environment:
-            PORT: 3000
         command:
             - npm
             - run
@@ -33,8 +30,6 @@ services:
     test-watch:
         image: spotify-radio
         build: .
-        environment:
-            PORT: 3000
         command:
             - npm
             - run
@@ -46,8 +41,6 @@ services:
     test-e2e-watch:
         image: spotify-radio
         build: .
-        environment:
-            PORT: 3000
         command:
             - npm
             - run
@@ -59,8 +52,6 @@ services:
     test-coverage:
         image: spotify-radio
         build: .
-        environment:
-            PORT: 3000
         command:
             - npm
             - run

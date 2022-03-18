@@ -89,23 +89,30 @@ describe("#Routes Controller - Test suite for API response", () => {
 
 	describe("createClientStream", () => {
 		test("should successfully create client stream", async () => {
-			const clientStream = TestUtil.generatePassthroughStream();
-			const expectedClientStream = { id: randomUUID(), clientStream };
+			const mockStream = TestUtil.generateReadableStream(["test"]);
+			const mockId = "1";
+			jest.spyOn(
+				RoutesService.prototype,
+				RoutesService.prototype.createClientStream.name
+			).mockReturnValue({
+				id: mockId,
+				clientStream: mockStream,
+			});
 
-			const createClientStream = jest
-				.spyOn(
-					RoutesService.prototype,
-					RoutesService.prototype.createClientStream.name
-				)
-				.mockReturnValue(expectedClientStream);
+			jest.spyOn(
+				RoutesService.prototype,
+				RoutesService.prototype.removeClientStream.name
+			).mockReturnValue();
 
-			expect(routesController.createClientStream()).toHaveProperty(
-				'onClose'
+			const { stream, onClose } = routesController.createClientStream();
+
+			onClose();
+
+			expect(stream).toStrictEqual(mockStream);
+			expect(RoutesService.prototype.removeClientStream).toHaveBeenCalledWith(
+				mockId
 			);
-			expect(routesController.createClientStream()).toHaveProperty(
-				'stream'
-			);
-			expect(createClientStream).toHaveBeenCalled();
+			expect(RoutesService.prototype.createClientStream).toHaveBeenCalled();
 		});
 	});
 });

@@ -108,7 +108,6 @@ export class RoutesService {
 	async getFileInfo(filename) {
 		const fullFilePath = join(this.config.dir.publicDirectory, filename);
 
-		// Valida se existe, caso não, um erro é gerado.
 		await fsPromises.access(fullFilePath);
 
 		const fileType = extname(fullFilePath);

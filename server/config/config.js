@@ -9,8 +9,8 @@ const songsDirectory = join(audioDirectory, "songs");
 const fxDirectory = join(audioDirectory, "fx");
 
 export default {
-	logEnabled: process.env.LOG_ENABLED || false,
-	port: process.env.PORT || 3000,
+	logEnabled: process.env.LOG_ENABLED ?? false,
+	port: process.env.PORT ?? 3000,
 	dir: {
 		currentDir,
 		root,

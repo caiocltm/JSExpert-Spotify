@@ -21,15 +21,15 @@ export default class TestUtil {
 	static generateWritableStream(onData) {
 		return new Writable({
 			write(chunk, encoding, callback) {
-				onData(chunk);
+				onData?.(chunk);
 				callback(null, chunk);
 			},
 		});
 	}
 
-	static defaultHandlerParams(requestData = 'data') {
+	static defaultHandlerParams(requestData = "data") {
 		const requestStream = TestUtil.generateReadableStream([requestData]);
-		const responseStream = TestUtil.generateWritableStream(() => ({}));
+		const responseStream = TestUtil.generateWritableStream();
 		const data = {
 			request: Object.assign(requestStream, {
 				headers: {},

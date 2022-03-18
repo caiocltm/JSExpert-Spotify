@@ -1,37 +1,31 @@
-import { jest, expect, describe, test, beforeEach } from "@jest/globals";
-import Supertest from "supertest";
-import PortFinder from "portfinder";
-import config from "../../../server/config/config.js";
-import Server from "../../../server/server.js";
+import { jest, expect, describe, test } from "@jest/globals";
+import superTest from "supertest";
+import portfinder from "portfinder";
 import { Transform } from "stream";
 import { setTimeout } from "timers/promises";
-import { readFileSync } from "fs";
-import { join } from "path";
+import fs from "fs";
+import Server from "../../../server/server.js";
+import Config from "../../../server/config/config.js";
 
+const getAvailablePort = portfinder.getPortPromise;
 const RETENTION_DATA_PERIOD = 200;
-const commandResponse = JSON.stringify({ result: "ok" });
-const possibleCommands = { start: "start", stop: "stop" };
-const getAvailablePort = PortFinder.getPortPromise;
-
-function pipeAndReadStreamData(stream, onChunk) {
-	const transform = new Transform({
-		transform(chunk, encoding, callback) {
-			onChunk(chunk);
-			callback(null, chunk);
-		},
-	});
-
-	return stream.pipe(transform);
-}
+const commandResponse = JSON.stringify({
+	result: "ok",
+});
+const possibleCommands = {
+	start: "start",
+	stop: "stop",
+};
 
 async function getTestServer() {
-	const getSupertest = (port) => Supertest(`http://localhost:${port}`);
+	const getSupertTest = (port) => superTest(`http://localhost:${port}`);
 	const port = await getAvailablePort();
-
 	return new Promise((resolve, reject) => {
-		const server = Server.listen(port)
+		// fix: alterei para chamar o server como uma funcao
+		const server = Server()
+			.listen(port)
 			.once("listening", () => {
-				const testServer = getSupertest(port);
+				const testServer = getSupertTest(port);
 				const response = {
 					testServer,
 					kill() {
@@ -48,152 +42,75 @@ async function getTestServer() {
 function commandSender(testServer) {
 	return {
 		async send(command) {
-			const response = await testServer
-				.post("/controller")
-				.send({ command });
+			const response = await testServer.post("/controller").send({
+				command,
+			});
 
 			expect(response.text).toStrictEqual(commandResponse);
 		},
 	};
 }
 
-describe("#API e2e - Test suite", () => {
-	beforeEach(async () => {
-		jest.clearAllMocks();
-		jest.restoreAllMocks();
+describe("API E2E Suite Test", () => {
+	let testServer = superTest(Server());
+
+	function pipeAndReadStreamData(stream, onChunk) {
+		const transform = new Transform({
+			transform(chunk, enc, cb) {
+				onChunk(chunk);
+
+				cb(null, chunk);
+			},
+		});
+		return stream.pipe(transform);
+	}
+
+	test("GET /unknown - given an unknown route it should respond with 404 status code", async () => {
+		const response = await testServer.get(`/unknown`);
+		expect(response.statusCode).toStrictEqual(404);
 	});
 
-	describe("GET /", () => {
-		test("should be redirected to page home", async () => {
-			const server = await getTestServer();
-			const response = await server.testServer.get("/");
-
-			expect(response.status).toStrictEqual(302);
-			expect(response.header.location).toStrictEqual(
-				config.location.home
-			);
-
-			server.kill();
-		});
+	test("GET / - it should respond with the home location and 302 status code", async () => {
+		const response = await testServer.get("/");
+		expect(response.headers.location).toStrictEqual("/home");
+		expect(response.statusCode).toStrictEqual(302);
 	});
 
-	describe("GET /home", () => {
-		test(`should sucessfully receive ${config.pages.homeHTML} page`, async () => {
-			const server = await getTestServer();
-			const response = await server.testServer.get(config.location.home);
-			const page = readFileSync(
-				join(config.dir.publicDirectory, config.pages.homeHTML)
-			).toString();
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(page);
-
-			server.kill();
-		});
+	test("GET /home - it should respond with file stream", async () => {
+		const response = await testServer.get("/home");
+		const homePage = await fs.promises.readFile(
+			`${Config.dir.publicDirectory}/${Config.pages.homeHTML}`
+		);
+		expect(response.text).toStrictEqual(homePage.toString());
 	});
 
-	describe("GET /controller", () => {
-		test(`should sucessfully receive ${config.pages.controllerHTML} page`, async () => {
-			const server = await getTestServer();
-			const response = await server.testServer.get(
-				config.location.controller
-			);
-			const page = readFileSync(
-				join(config.dir.publicDirectory, config.pages.controllerHTML)
-			).toString();
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(page);
-
-			server.kill();
-		});
-	});
-
-	describe("GET static resources", () => {
-		test("should sucessfully receive .html static resource", async () => {
-			const htmlResource = `${config.location.controller}/index.html`;
-			const server = await getTestServer();
-			const response = await server.testServer.get(htmlResource);
-			const staticResource = readFileSync(
-				join(config.dir.publicDirectory, htmlResource)
-			).toString();
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(staticResource);
-			expect(response.header["content-type"]).toStrictEqual(
-				config.constants.CONTENT_TYPE[".html"]
-			);
-
-			server.kill();
-		});
-
-		test("should sucessfully receive .css static resource", async () => {
-			const cssResource = `${config.location.controller}/css/index.css`;
-			const server = await getTestServer();
-			const response = await server.testServer.get(cssResource);
-			const staticResource = readFileSync(
-				join(config.dir.publicDirectory, cssResource)
-			).toString();
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(staticResource);
-			expect(response.header["content-type"]).toStrictEqual(
-				config.constants.CONTENT_TYPE[".css"]
-			);
-
-			server.kill();
-		});
-
-		test("should sucessfully receive .png static resource", async () => {
-			const pngResource = `${config.location.controller}/assets/JS.png`;
-			const server = await getTestServer();
-			const response = await server.testServer.get(pngResource);
-			const staticResource = readFileSync(
-				join(config.dir.publicDirectory, pngResource)
-			).toString();
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(staticResource);
-			expect(response.header["content-type"]).toStrictEqual(
-				config.constants.CONTENT_TYPE[".png"]
-			);
-
-			server.kill();
-		});
+	test("GET /controller - it should respond with file stream", async () => {
+		const response = await testServer.get("/controller");
+		const homePage = await fs.promises.readFile(
+			`${Config.dir.publicDirectory}/${Config.pages.controllerHTML}`
+		);
+		expect(response.text).toStrictEqual(homePage.toString());
 	});
 
 	describe("GET /stream", () => {
-		test("should not receive data stream if the process is not playing", async () => {
+		test("it should not receive data stream if the process is not playing", async () => {
 			const server = await getTestServer();
-
 			const onChunk = jest.fn();
-
 			pipeAndReadStreamData(server.testServer.get("/stream"), onChunk);
-
 			await setTimeout(RETENTION_DATA_PERIOD);
-
-			expect(onChunk).not.toHaveBeenCalled();
-
 			server.kill();
+			expect(onChunk).not.toHaveBeenCalled();
 		});
-
-		test("should receive data stream if the process is playing", async () => {
+		test("it should receive data stream if the process is playing", async () => {
 			const server = await getTestServer();
-
 			const onChunk = jest.fn();
-
 			const { send } = commandSender(server.testServer);
-
 			pipeAndReadStreamData(server.testServer.get("/stream"), onChunk);
 
 			await send(possibleCommands.start);
-
 			await setTimeout(RETENTION_DATA_PERIOD);
-
 			await send(possibleCommands.stop);
-
 			const [[buffer]] = onChunk.mock.calls;
-
 			expect(buffer).toBeInstanceOf(Buffer);
 			expect(buffer.length).toBeGreaterThan(1000);
 
@@ -201,33 +118,46 @@ describe("#API e2e - Test suite", () => {
 		});
 	});
 
-	describe("POST /controller", () => {
-		test("should sucessfully POST stream start command", async () => {
-			const command = possibleCommands.start;
-			const server = await getTestServer();
-			const response = await server.testServer
-				.post("/controller")
-				.send({ command });
-			const expected = JSON.stringify({ result: "ok" });
-
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(expected);
-
-			server.kill();
+	describe("GET static files", () => {
+		test("GET /file.js - it should respond with 404 if file doesnt exists", async () => {
+			const file = "file.js";
+			const response = await testServer.get(`/${file}`);
+			expect(response.statusCode).toStrictEqual(404);
 		});
 
-		test("should sucessfully POST stream stop command", async () => {
-			const command = possibleCommands.stop;
-			const server = await getTestServer();
-			const response = await server.testServer
-				.post("/controller")
-				.send({ command });
-			const expected = JSON.stringify({ result: "ok" });
+		test("GET /controller/css/index.css - given a css file it should respond with content-type text/css ", async () => {
+			const file = "controller/css/index.css";
+			const response = await testServer.get(`/${file}`);
+			const existingPage = await fs.promises.readFile(
+				`${Config.dir.publicDirectory}/${file}`
+			);
+			expect(response.text).toStrictEqual(existingPage.toString());
+			expect(response.statusCode).toStrictEqual(200);
+			expect(response.header["content-type"]).toStrictEqual("text/css");
+		});
 
-			expect(response.status).toStrictEqual(200);
-			expect(response.text).toStrictEqual(expected);
+		test("GET /home/js/animation.js - given a js file it should respond with content-type text/javascript ", async () => {
+			const file = "home/js/animation.js";
+			const response = await testServer.get(`/${file}`);
+			const existingPage = await fs.promises.readFile(
+				`${Config.dir.publicDirectory}/${file}`
+			);
+			expect(response.text).toStrictEqual(existingPage.toString());
+			expect(response.statusCode).toStrictEqual(200);
+			expect(response.header["content-type"]).toStrictEqual(
+				"text/javascript"
+			);
+		});
 
-			server.kill();
+		test("GET /controller/index.html - given a html file it should respond with content-type text/html ", async () => {
+			const file = Config.pages.controllerHTML;
+			const response = await testServer.get(`/${file}`);
+			const existingPage = await fs.promises.readFile(
+				`${Config.dir.publicDirectory}/${file}`
+			);
+			expect(response.text).toStrictEqual(existingPage.toString());
+			expect(response.statusCode).toStrictEqual(200);
+			expect(response.header["content-type"]).toStrictEqual("text/html");
 		});
 	});
 });

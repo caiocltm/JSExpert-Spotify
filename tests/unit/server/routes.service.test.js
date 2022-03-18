@@ -10,6 +10,7 @@ import ChildProcess from "child_process";
 import EventEmitter from "events";
 import { Readable, Writable } from "stream";
 import StreamPromises from "stream/promises";
+import streamsAsync from 'stream/promises';
 
 const {
 	dir: { publicDirectory },
@@ -234,17 +235,46 @@ describe("#Routes Service - Test suite for API response", () => {
 
 	describe("startStreaming", () => {
 		test("should successfully start streaming", async () => {
-			const bitRate = "128000";
-
-			jest.spyOn(routesService, "getBitRate").mockResolvedValue(bitRate);
-
-			jest.spyOn(routesService, "createFileStream").mockReturnValue(
-				TestUtil.generateReadableStream("data")
+			const currentSong = "mySong.mp3";
+			routesService.currentSong = currentSong;
+			const currentReadable = TestUtil.generateReadableStream(["abc"]);
+			const expectedResult = "ok";
+			const writableBroadCaster = TestUtil.generateWritableStream(
+				() => {}
 			);
 
-			const stream = routesService.startStreaming();
+			jest.spyOn(
+				routesService,
+				routesService.getBitRate.name
+			).mockResolvedValue(config.constants.fallbackBitRate);
 
-			expect(stream).toBeInstanceOf(Promise);
+			jest.spyOn(
+				streamsAsync,
+				streamsAsync.pipeline.name
+			).mockResolvedValue(expectedResult);
+
+			jest.spyOn(fs, fs.createReadStream.name).mockReturnValue(
+				currentReadable
+			);
+
+			jest.spyOn(
+				routesService,
+				routesService.broadCast.name
+			).mockReturnValue(writableBroadCaster);
+
+			const expectedThrottle = config.constants.fallbackBitRate / config.constants.bitRateDivisor;
+			const result = await routesService.startStreaming();
+
+			expect(routesService.currentBitRate).toEqual(expectedThrottle);
+			expect(result).toEqual(expectedResult);
+
+			expect(routesService.getBitRate).toHaveBeenCalledWith(currentSong);
+			expect(fs.createReadStream).toHaveBeenCalledWith(currentSong);
+			expect(streamsAsync.pipeline).toHaveBeenCalledWith(
+				currentReadable,
+				routesService.throttleTransform,
+				routesService.broadCast()
+			);
 		});
 	});
 

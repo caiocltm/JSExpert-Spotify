@@ -6,7 +6,7 @@
 	"main": "index.js",
 	"scripts": {
 		"live-reload": "LOG_ENABLED=true nodemon server/index.js",
-		"start": "node server/index.js",
+		"start": "LOG_ENABLED=true node server/index.js",
 		"test": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --no-cache --detectOpenHandles",
 		"test:watch": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --no-cache --detectOpenHandles --watchAll",
 		"test:watch:e2e": "NODE_OPTIONS='--experimental-vm-modules --no-warnings' jest --no-cache --detectOpenHandles --watchAll tests/e2e",
