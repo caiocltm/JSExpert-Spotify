@@ -20,17 +20,20 @@ export class RoutesController {
 
 		const cmd = command.toLowerCase();
 
-		if (cmd.includes('start')) {
-			this.routesService.startStreaming();
-			return result;
-		}
+		if (!(cmd in this.config.commands)) return result;
 
-		if (cmd.includes('stop')) {
-			this.routesService.stopStreaming();
-			return result;
-		}
+		const availableCommands = {
+			[this.config.commands.start]: () => {
+				this.routesService.startStreaming();
+				return result;
+			},
+			[this.config.commands.stop]: () => {
+				this.routesService.stopStreaming();
+				return result;
+			}
+		};
 
-		return result;
+		return availableCommands[cmd]();
 	}
 
 	createClientStream() {
