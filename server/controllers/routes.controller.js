@@ -29,6 +29,8 @@ export class RoutesController {
 			this.routesService.stopStreaming();
 			return result;
 		}
+
+		return result;
 	}
 
 	createClientStream() {

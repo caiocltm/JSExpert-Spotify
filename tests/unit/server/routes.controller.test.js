@@ -58,10 +58,13 @@ describe('#Routes Controller - Test suite for API response', () => {
 			expect(stopStreamingMock).toHaveBeenCalled();
 		});
 
-		test('should not execute command given unknown operation', async () => {
+		test('should not execute command given unknown operation and return result', async () => {
 			const command = 'pause';
+			const expected = {
+				result: 'ok'
+			};
 
-			expect(await routesController.handleCommand({ command })).toBeUndefined();
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
 		});
 	});
 
