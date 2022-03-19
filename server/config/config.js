@@ -35,12 +35,18 @@ export default {
 		},
 		audioMediaType: 'mp3',
 		songVolume: '0.99',
+		fxVolume: '0.1',
 		fallbackBitRate: '128000',
 		bitRateDivisor: 8,
 		englishConversation: join(songsDirectory, 'conversation.mp3')
 	},
 	commands: {
 		start: 'start',
-		stop: 'stop'
+		stop: 'stop',
+		applause: 'applause',
+		audience_applause: 'audience_applause',
+		boo: 'boo',
+		fart: 'fart',
+		laughing: 'laughing'
 	}
 };

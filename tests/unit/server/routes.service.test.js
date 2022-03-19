@@ -64,6 +64,7 @@ describe('#Routes Service - Test suite for API response', () => {
 	describe('_executeSoxCommand', () => {
 		test('should successfully execute sox command and return output', async () => {
 			const args = ['--t', 'test.mp3'];
+			const expected = '128k';
 			const spawnEvent = new EventEmitter();
 			spawnEvent.stdout = new Readable({
 				read() {
@@ -79,7 +80,7 @@ describe('#Routes Service - Test suite for API response', () => {
 
 			const spawnSpy = jest.spyOn(ChildProcess, 'spawn').mockReturnValue(spawnEvent);
 
-			expect(await routesService._executeSoxCommand(args)).toBeInstanceOf(Buffer);
+			expect(await routesService._executeSoxCommand(args)).toStrictEqual(expected);
 			expect(spawnSpy).toHaveBeenCalled();
 		});
 

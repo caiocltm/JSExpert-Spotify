@@ -6,10 +6,7 @@
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 		<title>Radio Controller - Semana JS Expert 6.0</title>
 		<link rel="stylesheet" href="./controller/css/index.css" />
-		<link
-			href="https://fonts.googleapis.com/css?family=Permanent+Marker"
-			rel="stylesheet"
-		/>
+		<link href="https://fonts.googleapis.com/css?family=Permanent+Marker" rel="stylesheet" />
 	</head>
 
 	<body>
@@ -17,14 +14,12 @@
 			<img src="./controller/assets/JS.png" alt="js expert" />
 			<section>
 				<button class="active command" id="start">Start Stream</button>
-				<button class="active hidden command" id="stop">
-					Stop Stream
-				</button>
-				<button>Applause</button>
-				<button>Audience Applause</button>
-				<button>Boo!</button>
-				<button>Fart</button>
-				<button>Laughing</button>
+				<button class="active hidden command" id="stop">Stop Stream</button>
+				<button name="command" id="applause">Applause</button>
+				<button name="command" id="audience_applause">Audience Applause</button>
+				<button name="command" id="boo">Boo!</button>
+				<button name="command" id="fart">Fart</button>
+				<button name="command" id="laughing">Laughing</button>
 				<button class="unassigned">
 					Unassigned <br />
 					:(
@@ -35,5 +30,7 @@
 				</button>
 			</section>
 		</div>
+
+		<script type="module" src="./controller/js/index.js"></script>
 	</body>
 </html>

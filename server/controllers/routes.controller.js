@@ -27,8 +27,57 @@ export class RoutesController {
 				this.routesService.startStreaming();
 				return result;
 			},
+
 			[this.config.commands.stop]: () => {
 				this.routesService.stopStreaming();
+				return result;
+			},
+
+			[this.config.commands.applause]: async () => {
+				const chosenFxAudio = await this.routesService.readFxByName(this.config.commands.applause);
+
+				this.routesService.appendFxAudioStream(chosenFxAudio);
+
+				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+			},
+
+			[this.config.commands.audience_applause]: async () => {
+				const chosenFxAudio = await this.routesService.readFxByName(this.config.commands.audience_applause);
+
+				this.routesService.appendFxAudioStream(chosenFxAudio);
+
+				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+
+				return result;
+			},
+
+			[this.config.commands.boo]: async () => {
+				const chosenFxAudio = await this.routesService.readFxByName(this.config.commands.boo);
+
+				this.routesService.appendFxAudioStream(chosenFxAudio);
+
+				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+
+				return result;
+			},
+
+			[this.config.commands.fart]: async () => {
+				const chosenFxAudio = await this.routesService.readFxByName(this.config.commands.fart);
+
+				this.routesService.appendFxAudioStream(chosenFxAudio);
+
+				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+
+				return result;
+			},
+
+			[this.config.commands.laughing]: async () => {
+				const chosenFxAudio = await this.routesService.readFxByName(this.config.commands.laughing);
+
+				this.routesService.appendFxAudioStream(chosenFxAudio);
+
+				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+
 				return result;
 			}
 		};

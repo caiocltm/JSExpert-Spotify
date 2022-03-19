@@ -70,7 +70,7 @@ async function routes(request, response) {
 
 	response.writeHead(404);
 
-	response.end();
+	return response.end();
 }
 
 function handlerError(error, response) {
