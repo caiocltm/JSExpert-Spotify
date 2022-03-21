@@ -3,22 +3,12 @@ import Controller from '../../../public/controller/js/controller.js';
 import Service from '../../../public/controller/js/service.js';
 import View from '../../../public/controller/js/view.js';
 
-function makeButtonElement({ text, classList } = { text: '', classList: { add: jest.fn(), remove: jest.fn() } }) {
-	return {
-		onClick: jest.fn(),
-		classList,
-		innerText: text
-	};
-}
-
 describe('#Controller - Test suite for controller layer', () => {
-	const url = 'url';
+	const url = 'http://localhost:3000/controller';
 
 	beforeEach(() => {
-		jest.resetAllMocks();
+		jest.restoreAllMocks();
 		jest.clearAllMocks();
-
-		jest.spyOn(document, 'getElementById').mockReturnValue(makeButtonElement());
 	});
 
 	describe('initialize', () => {
@@ -26,25 +16,45 @@ describe('#Controller - Test suite for controller layer', () => {
 			const view = new View();
 			const service = new Service({ url });
 
-			const onLoadSpyMock = jest.spyOn(Controller.prototype, 'onLoad');
+			const onLoad = jest.spyOn(Controller.prototype, Controller.prototype.onLoad.name).mockReturnValue();
 
 			const result = Controller.initialize({ view, service });
 
+			expect(onLoad).toHaveBeenCalled();
 			expect(result).toBeInstanceOf(Controller);
-			expect(onLoadSpyMock).toHaveBeenCalled();
 		});
 	});
 
-	describe.skip('onLoad', () => {
+	test('CommandReceived', async () => {
+		const view = new View();
+		const service = new Service({ url });
+		const controller = new Controller({ view, service });
+		const command = 'start';
+
+		const makeRequest = jest.spyOn(Service.prototype, Service.prototype.makeRequest.name).mockResolvedValue({ result: 'ok' });
+
+		const result = await controller.commandReceived(command);
+
+		expect(makeRequest).toHaveBeenCalledWith({ command });
+		expect(result).toStrictEqual({ result: 'ok' });
+	});
+
+	describe('onLoad', () => {
 		test('should call onLoad method on view class', () => {
 			const view = new View();
 			const service = new Service({ url });
 			const controller = new Controller({ view, service });
+			const bind = jest.fn().bind();
 
-			const viewOnLoadSpyMock = jest.spyOn(view, 'onLoad');
+			jest.spyOn(controller.commandReceived, 'bind').mockReturnValue(bind);
 
-			expect(controller.onLoad()).toBeUndefined();
-			expect(viewOnLoadSpyMock).toHaveBeenCalled();
+			controller.view.onLoad = jest.fn();
+			controller.view.configureOnButtonClick = jest.fn();
+
+			controller.onLoad();
+
+			expect(controller.view.onLoad).toHaveBeenCalled();
+			expect(controller.view.configureOnButtonClick).toHaveBeenCalled();
 		});
 	});
 });

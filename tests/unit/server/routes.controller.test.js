@@ -4,10 +4,6 @@ import { RoutesService } from '../../../server/services/routes.service.js';
 import TestUtil from '../../_util/test.util.js';
 import config from '../../../server/config/config.js';
 
-const {
-	pages: { homeHTML }
-} = config;
-
 describe('#Routes Controller - Test suite for API response', () => {
 	let routesController;
 
@@ -28,14 +24,14 @@ describe('#Routes Controller - Test suite for API response', () => {
 				.spyOn(RoutesService.prototype, RoutesService.prototype.getFileStream.name)
 				.mockResolvedValue(expected);
 
-			expect(await routesController.getFileStream(homeHTML)).toStrictEqual(expected);
-			expect(getFileStreamMock).toHaveBeenCalledWith(homeHTML);
+			expect(await routesController.getFileStream(config.pages.homeHTML)).toStrictEqual(expected);
+			expect(getFileStreamMock).toHaveBeenCalledWith(config.pages.homeHTML);
 		});
 	});
 
 	describe('handleCommand', () => {
-		test('should successfully start stream', async () => {
-			const command = 'start';
+		test(`should successfully ${config.commands.start} stream`, async () => {
+			const command = config.commands.start;
 			const expected = {
 				result: 'ok'
 			};
@@ -46,8 +42,73 @@ describe('#Routes Controller - Test suite for API response', () => {
 			expect(startStreamingMock).toHaveBeenCalled();
 		});
 
-		test('should successfully stop stream', async () => {
-			const command = 'stop';
+		test(`should successfully add ${config.commands.applause} Fx to current stream`, async () => {
+			const command = config.commands.applause;
+			const expected = {
+				result: 'ok'
+			};
+			const fxAudio = 'fxaudio';
+
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.readFxByName.name).mockResolvedValue(fxAudio);
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.appendFxAudioStream.name).mockReturnValue();
+
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
+		});
+
+		test(`should successfully add ${config.commands.audience_applause} Fx to current stream`, async () => {
+			const command = config.commands.audience_applause;
+			const expected = {
+				result: 'ok'
+			};
+			const fxAudio = 'fxaudio';
+
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.readFxByName.name).mockResolvedValue(fxAudio);
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.appendFxAudioStream.name).mockReturnValue();
+
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
+		});
+
+		test(`should successfully add ${config.commands.boo} Fx to current stream`, async () => {
+			const command = config.commands.boo;
+			const expected = {
+				result: 'ok'
+			};
+			const fxAudio = 'fxaudio';
+
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.readFxByName.name).mockResolvedValue(fxAudio);
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.appendFxAudioStream.name).mockReturnValue();
+
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
+		});
+
+		test(`should successfully add ${config.commands.fart} Fx to current stream`, async () => {
+			const command = config.commands.fart;
+			const expected = {
+				result: 'ok'
+			};
+			const fxAudio = 'fxaudio';
+
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.readFxByName.name).mockResolvedValue(fxAudio);
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.appendFxAudioStream.name).mockReturnValue();
+
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
+		});
+
+		test(`should successfully add ${config.commands.laughing} Fx to current stream`, async () => {
+			const command = config.commands.laughing;
+			const expected = {
+				result: 'ok'
+			};
+			const fxAudio = 'fxaudio';
+
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.readFxByName.name).mockResolvedValue(fxAudio);
+			jest.spyOn(RoutesService.prototype, RoutesService.prototype.appendFxAudioStream.name).mockReturnValue();
+
+			expect(await routesController.handleCommand({ command })).toStrictEqual(expected);
+		});
+
+		test(`should successfully ${config.commands.stop} stream`, async () => {
+			const command = config.commands.stop;
 			const expected = {
 				result: 'ok'
 			};

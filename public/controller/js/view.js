@@ -3,7 +3,6 @@ export default class View {
 		this.buttonStart = document.getElementById('start');
 		this.buttonStop = document.getElementById('stop');
 		this.buttons = () => Array.from(document.querySelectorAll('button:not(.unassigned)'));
-		this.unassignedButtons = () => Array.from(document.querySelectorAll('button.unassigned'));
 
 		async function onButtonClick() {}
 
@@ -55,7 +54,6 @@ export default class View {
 			return;
 		}
 
-		console.log('setupButtonAction', id);
 		button.onclick = this.onCommandClick.bind(this);
 	}
 

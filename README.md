@@ -13,7 +13,7 @@ Acesse a [**comunidade exclusiva no discord**](https://bit.ly/semanajsexpert-dis
 
 - Web API
     - [x] Deve atingir 100% de cobertura de código em testes
-    - [ ] Deve ter testes end to end validando todas as rotas da API
+    - [x] Deve ter testes end to end validando todas as rotas da API
     - [x] Deve entregar arquivos estáticos como Node.js Stream
     - [x] Deve entregar arquivos de música como Node.js Stream
     - [x] Dado um usuário desconectado, não deve quebrar a API
@@ -26,7 +26,7 @@ Acesse a [**comunidade exclusiva no discord**](https://bit.ly/semanajsexpert-dis
         - [x] Deve reproduzir a transmissão
         - [x] Não deve pausar se algum efeito for adicionado
     - Controller
-        - [ ] Deve atingir 100% de cobertura de código em testes
+        - [x] Deve atingir 100% de cobertura de código em testes
         - [x] Deve poder iniciar ou parar uma transmissão 
         - [x] Deve enviar comandos para adicionar audio efeitos à uma transmissão
 

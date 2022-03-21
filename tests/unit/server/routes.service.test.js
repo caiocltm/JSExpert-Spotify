@@ -7,14 +7,20 @@ import fsPromises from 'fs/promises';
 import config from '../../../server/config/config.js';
 import crypto from 'crypto';
 import ChildProcess from 'child_process';
-import EventEmitter from 'events';
-import { Readable, Writable } from 'stream';
+import { Writable, PassThrough } from 'stream';
 import StreamPromises from 'stream/promises';
 import streamsAsync from 'stream/promises';
+import Throttle from 'throttle';
 
 const {
 	dir: { publicDirectory }
 } = config;
+
+const getSpawnResponse = ({ stdout = '', stderr = '', stdin = () => {} }) => ({
+	stdout: TestUtil.generateReadableStream([stdout]),
+	stderr: TestUtil.generateReadableStream([stderr]),
+	stdin: TestUtil.generateWritableStream(stdin)
+});
 
 describe('#Routes Service - Test suite for API response', () => {
 	let routesService;
@@ -62,71 +68,47 @@ describe('#Routes Service - Test suite for API response', () => {
 	});
 
 	describe('_executeSoxCommand', () => {
-		test('should successfully execute sox command and return output', async () => {
-			const args = ['--t', 'test.mp3'];
-			const expected = '128k';
-			const spawnEvent = new EventEmitter();
-			spawnEvent.stdout = new Readable({
-				read() {
-					this.push('128k');
-					this.push(null);
-				}
-			});
-			spawnEvent.stderr = new Readable({
-				read() {
-					this.push(null);
-				}
-			});
+		test('it should execute sox', async () => {
+			const args = ['tutistutis.mp3'];
 
-			const spawnSpy = jest.spyOn(ChildProcess, 'spawn').mockReturnValue(spawnEvent);
+			const spawn = jest.spyOn(ChildProcess, ChildProcess.spawn.name);
 
-			expect(await routesService._executeSoxCommand(args)).toStrictEqual(expected);
-			expect(spawnSpy).toHaveBeenCalled();
-		});
+			routesService._executeSoxCommand(args);
 
-		test('should not successfully execute sox command and return error', async () => {
-			const args = ['--t', 'test.mp3'];
-			const error = 'ENOENT';
-			const spawnEvent = new EventEmitter();
-			spawnEvent.stdout = new Readable({
-				read() {
-					this.push('');
-					this.push(null);
-				}
-			});
-			spawnEvent.stderr = new Readable({
-				read() {
-					this.push(error);
-					this.push(null);
-				}
-			});
-
-			const spawnSpy = jest.spyOn(ChildProcess, 'spawn').mockReturnValue(spawnEvent);
-
-			expect(async () => routesService._executeSoxCommand(args)).rejects.toBe(error);
-			expect(spawnSpy).toHaveBeenCalled();
+			expect(spawn).toHaveBeenCalledWith('sox', args);
 		});
 	});
 
 	describe('getBitRate', () => {
-		test('should successfully get bit rate info given .mp3 file', async () => {
-			const filename = 'song.mp3';
-			const bitRateInfo = Buffer('128k');
+		test('it should return bitrate of song', async () => {
+			const song = 'music.mp3';
+			const bitRate = ['128k', '128000'];
+			const args = ['--i', '-B', song];
 
-			jest.spyOn(routesService, '_executeSoxCommand').mockResolvedValue(bitRateInfo);
+			const stderr = TestUtil.generateReadableStream('');
+			const stdout = TestUtil.generateReadableStream([bitRate[0]]);
 
-			const expected = '128000';
+			const execCommand = jest.spyOn(routesService, routesService._executeSoxCommand.name).mockReturnValue({ stderr, stdout });
 
-			expect(await routesService.getBitRate(filename)).toStrictEqual(expected);
+			const result = await routesService.getBitRate(song);
+
+			expect(execCommand).toHaveBeenCalledWith(args);
+			expect(result).toBe(bitRate[1]);
 		});
 
-		test('should not successfully get bit rate info of .mp3 file given thrown error', async () => {
-			const filename = 'song.mp3';
-			const error = 'ENOENT';
+		test('it should error in getBitRate', async () => {
+			const song = 'music.mp3';
+			const args = ['--i', '-B', song];
 
-			jest.spyOn(routesService, '_executeSoxCommand').mockRejectedValue(new Error(error));
+			const stderr = TestUtil.generateReadableStream(['error']);
+			const stdout = TestUtil.generateReadableStream('');
 
-			expect(await routesService.getBitRate(filename)).toStrictEqual(config.constants.fallbackBitRate);
+			const execCommand = jest.spyOn(routesService, routesService._executeSoxCommand.name).mockReturnValue({ stderr, stdout });
+
+			const result = await routesService.getBitRate(song);
+
+			expect(execCommand).toHaveBeenCalledWith(args);
+			expect(result).toBe(config.constants.fallbackBitRate);
 		});
 	});
 
@@ -240,6 +222,138 @@ describe('#Routes Service - Test suite for API response', () => {
 
 			expect(stopStreaming).toBeUndefined();
 			expect(throtleTransformSpy).toHaveBeenCalled();
+		});
+	});
+
+	describe('readFxByName', () => {
+		test('should successfully return fx audio path given name', async () => {
+			const fxName = 'applause';
+			const fxAudiosFound = ['applause.mp3'];
+			const expected = path.join(config.dir.fxDirectory, fxAudiosFound[0]);
+
+			jest.spyOn(fsPromises, 'readdir').mockResolvedValue(fxAudiosFound);
+
+			expect(await routesService.readFxByName(fxName)).toStrictEqual(expected);
+			expect(fsPromises.readdir).toHaveBeenCalledWith(config.dir.fxDirectory);
+		});
+
+		test('should not found fx audio path given name and throw an exception', async () => {
+			const fxName = 'unknown';
+			const fxAudiosFound = ['applause.mp3'];
+
+			jest.spyOn(fsPromises, 'readdir').mockResolvedValue(fxAudiosFound);
+
+			const result = routesService.readFxByName(fxName);
+
+			expect(async () => result).rejects.toThrow(`Fx audio ${fxName} was not found`);
+			expect(fsPromises.readdir).toHaveBeenCalledWith(config.dir.fxDirectory);
+		});
+	});
+
+	describe('appendFxAudioStream', () => {
+		test('should successfully append new Fx audio to current stream', async () => {
+			const currentFx = 'fx.mp3';
+			routesService.throttleTransform = new PassThrough();
+			routesService.songReadable = TestUtil.generateReadableStream(['abc']);
+
+			const mergedthrottleTransformMock = new PassThrough();
+			const expectedFirstCallResult = 'ok1';
+			const expectedSecondCallResult = 'ok2';
+			const writableBroadCaster = TestUtil.generateWritableStream(() => {});
+
+			jest.spyOn(streamsAsync, streamsAsync.pipeline.name)
+				.mockResolvedValueOnce(expectedFirstCallResult)
+				.mockResolvedValueOnce(expectedSecondCallResult);
+
+			jest.spyOn(routesService, routesService.broadCast.name).mockReturnValue(writableBroadCaster);
+
+			jest.spyOn(routesService, routesService.mergeAudioStreams.name).mockReturnValue(mergedthrottleTransformMock);
+
+			jest.spyOn(mergedthrottleTransformMock, 'removeListener').mockReturnValue();
+
+			jest.spyOn(routesService.throttleTransform, 'pause');
+
+			jest.spyOn(routesService.songReadable, 'unpipe').mockImplementation();
+
+			routesService.appendFxAudioStream(currentFx);
+
+			expect(routesService.throttleTransform.pause).toHaveBeenCalled();
+			expect(routesService.songReadable.unpipe).toHaveBeenCalledWith(routesService.throttleTransform);
+
+			routesService.throttleTransform.emit('unpipe');
+
+			const [call1, call2] = streamsAsync.pipeline.mock.calls;
+			const [resultCall1, resultCall2] = streamsAsync.pipeline.mock.results;
+
+			const [throttleTransformCall1, broadCastCall1] = call1;
+			expect(throttleTransformCall1).toBeInstanceOf(Throttle);
+			expect(broadCastCall1).toStrictEqual(writableBroadCaster);
+
+			const [result1, result2] = await Promise.all([resultCall1.value, resultCall2.value]);
+
+			expect(result1).toStrictEqual(expectedFirstCallResult);
+			expect(result2).toStrictEqual(expectedSecondCallResult);
+
+			const [mergedStreamCall2, throttleTransformCall2] = call2;
+			expect(mergedStreamCall2).toStrictEqual(mergedthrottleTransformMock);
+			expect(throttleTransformCall2).toBeInstanceOf(Throttle);
+			expect(routesService.songReadable.removeListener).toHaveBeenCalled();
+		});
+	});
+
+	describe('mergeAudioStreams', () => {
+		test('should merge audio streams', async () => {
+			const currentFx = 'fx.mp3';
+			const currentReadable = TestUtil.generateReadableStream(['abc']);
+			const spawnResponse = getSpawnResponse({
+				stdout: '1k',
+				stdin: 'myFx'
+			});
+
+			jest.spyOn(routesService, routesService._executeSoxCommand.name).mockReturnValue(spawnResponse);
+
+			jest.spyOn(streamsAsync, streamsAsync.pipeline.name).mockResolvedValue();
+
+			const result = routesService.mergeAudioStreams(currentFx, currentReadable);
+
+			const [firstCall, secondCall] = streamsAsync.pipeline.mock.calls;
+
+			const [readableCall, stdinCall] = firstCall;
+			expect(readableCall).toStrictEqual(currentReadable);
+			expect(stdinCall).toStrictEqual(spawnResponse.stdin);
+
+			const [stdoutCall, transformStream] = secondCall;
+			expect(stdoutCall).toStrictEqual(spawnResponse.stdout);
+			expect(transformStream).toBeInstanceOf(PassThrough);
+
+			expect(result).toBeInstanceOf(PassThrough);
+		});
+
+		test('should not merge audio streams given thrown exception', async () => {
+			const currentFx = 'fx.mp3';
+			const currentReadable = TestUtil.generateReadableStream(['abc']);
+			const spawnResponse = getSpawnResponse({
+				stdout: '1k',
+				stdin: 'myFx'
+			});
+
+			jest.spyOn(routesService, routesService._executeSoxCommand.name).mockReturnValue(spawnResponse);
+
+			jest.spyOn(streamsAsync, streamsAsync.pipeline.name).mockRejectedValue(new Error('ERROR'));
+
+			const result = routesService.mergeAudioStreams(currentFx, currentReadable);
+
+			const [firstCall, secondCall] = streamsAsync.pipeline.mock.calls;
+
+			const [readableCall, stdinCall] = firstCall;
+			expect(readableCall).toStrictEqual(currentReadable);
+			expect(stdinCall).toStrictEqual(spawnResponse.stdin);
+
+			const [stdoutCall, transformStream] = secondCall;
+			expect(stdoutCall).toStrictEqual(spawnResponse.stdout);
+			expect(transformStream).toBeInstanceOf(PassThrough);
+
+			expect(result).toBeInstanceOf(PassThrough);
 		});
 	});
 });

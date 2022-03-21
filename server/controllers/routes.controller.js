@@ -39,6 +39,8 @@ export class RoutesController {
 				this.routesService.appendFxAudioStream(chosenFxAudio);
 
 				logger.info(`Added Fx audio ${chosenFxAudio} to service`);
+
+				return result;
 			},
 
 			[this.config.commands.audience_applause]: async () => {
